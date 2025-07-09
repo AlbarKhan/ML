@@ -490,4 +490,113 @@ plt.subplots_adjust(wspace=0.3)
 plt.show()
 
 ////////////////PRACTICAL 8 ///////////////////
+////////////////PRACTICAL 8 /////////////////
+
+Practical No. 8 
+ 
+Aim: Train an SVM regressor on the California Housing Dataset.
+CODE:
+# 1) IMPORT LIBRARIES 
+import pandas as pd 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+
+# 2) LOAD DATA FROM SKLEARN
+from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+
+# Load the dataset
+housing = fetch_california_housing(as_frame=True)
+data = housing.frame
+
+# Split into train/test
+train, test = train_test_split(data, test_size=0.2, random_state=42)
+
+# 3) SAVE TARGET & COMBINE FOR PREPROCESSING 
+n_train = train.shape[0] 
+n_test  = test.shape[0] 
+y       = train['MedHouseVal'].values
+
+# Add placeholder target column to test for uniformity
+test['MedHouseVal'] = np.nan
+
+# Combine for preprocessing
+data = pd.concat((train, test)).reset_index(drop=True)
+
+# Drop longitude & latitude (not in this dataset, but kept for compatibility)
+# In this version, they don't exist — so no need to drop unless you fetched a different version
+
+# 4) OPTIONAL: QUICK VISUALIZATIONS
+plt.figure(figsize=(10, 8)) 
+sns.heatmap(data.corr(), cmap='coolwarm', annot=True)
+plt.title("Correlation Heatmap")
+plt.show()
+
+sns.lmplot(x='MedInc', y='MedHouseVal', data=train)
+sns.lmplot(x='HouseAge', y='MedHouseVal', data=train)
+sns.pairplot(train, palette='rainbow')
+
+# 5) FEATURE SELECTION & MISSING-VALUE IMPUTATION
+data = data[['AveRooms', 'AveBedrms', 
+             'HouseAge', 'MedInc', 
+             'Population', 'AveOccup']]
+
+# Check for missing values
+print(data.info())
+
+# Fill missing values (if any)
+data.fillna(data.mean(), inplace=True)
+
+# Split back into train / test
+train = data[:n_train] 
+test  = data[n_train:] 
+
+# 6) TRAIN/VALIDATION SPLIT
+X_train, X_test, y_train, y_test = train_test_split(
+    train, y, test_size=0.2, random_state=42
+)
+
+# 7) SCALE FEATURES & TARGET
+from sklearn.preprocessing import StandardScaler
+
+sc_X = StandardScaler()
+X_train = sc_X.fit_transform(X_train)
+X_test  = sc_X.transform(X_test)
+
+sc_y = StandardScaler()
+y_train = sc_y.fit_transform(y_train.reshape(-1, 1)).ravel()
+y_test  = sc_y.transform(y_test.reshape(-1, 1)).ravel()
+
+# 8) FIT THE SVR MODEL
+from sklearn.svm import SVR
+
+regressor = SVR(kernel='rbf')
+regressor.fit(X_train, y_train)
+
+# 9) PREDICT & INVERSE-SCALE THE OUTPUT
+y_pred = regressor.predict(X_test)
+y_pred = sc_y.inverse_transform(y_pred.reshape(-1, 1)).flatten()
+
+# 10) COMPARE REAL VS. PREDICTED
+df = pd.DataFrame({
+    'Real Values'    : sc_y.inverse_transform(y_test.reshape(-1, 1)).flatten(),
+    'Predicted Values': y_pred
+})
+print(df.head())
+
+# Optional: Plot real vs predicted
+plt.figure(figsize=(8, 6))
+plt.scatter(df['Real Values'], df['Predicted Values'], alpha=0.5)
+plt.xlabel('Actual Median House Value')
+plt.ylabel('Predicted Median House Value')
+plt.title('SVR: Actual vs Predicted')
+plt.plot([df.min().min(), df.max().max()], [df.min().min(), df.max().max()], 'r--')
+plt.grid(True)
+plt.show()
+
+
+ 
+
+
 
