@@ -1,0 +1,493 @@
+/////////////////////////PRACTICAL 1//////////////////////
+Aim: Implement Linear Regression (Diabetes Dataset) 
+import numpy as np 
+import matplotlib.pyplot as plt 
+from sklearn import datasets, linear_model 
+from sklearn.metrics import mean_squared_error,r2_score 
+from sklearn.model_selection import train_test_split 
+ 
+diabetes = datasets.load_diabetes() 
+diabetes_X = diabetes.data[:, np.newaxis, 2] 
+diabetes_X_train, diabetes_X_test, diabetes_y_train, diabetes_y_test = train_test_split( 
+    diabetes_X, diabetes.target, test_size=0.3 
+) 
+regr = linear_model.LinearRegression() 
+regr.fit(diabetes_X_train,diabetes_y_train) 
+diabetes_y_pred = regr.predict(diabetes_X_test) 
+print('coefficents:\n',regr.coef_) 
+print('mean squared error: %.2f' % mean_squared_error(diabetes_y_test, diabetes_y_pred)) 
+print (' coefficent of determination (R² score) : %2f' % r2_score(diabetes_y_test, diabetes_y_pred)) 
+plt.scatter(diabetes_X_test,diabetes_y_test,color='black') 
+plt.plot(diabetes_X_test,diabetes_y_pred,color='blue',linewidth=3) 
+plt.xticks(()) 
+plt.yticks(())
+plt.xlabel('BMI') 
+plt.ylabel('disease progression') 
+plt.show() 
+
+/////////////////////////PRACTICAL 2//////////////////////
+QUESTION - To classify Iris flower species using logistic regression based on two features: sepal length 
+and sepal width. 
+
+CODE - 
+import numpy as np 
+import matplotlib.pyplot as plt 
+from sklearn.linear_model import LogisticRegression 
+from sklearn import datasets 
+
+# Load the dataset
+iris = datasets.load_iris() 
+X = iris.data[:, :2]  # Only take the first two features for visualization
+Y = iris.target 
+
+# Define the mesh grid step size
+h = 0.02  
+
+# Define min and max values before meshgrid
+x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5 
+y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5 
+
+# Create a mesh of points to plot
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), 
+                     np.arange(y_min, y_max, h)) 
+
+# Train the logistic regression model
+logreg = LogisticRegression(C=1e5, max_iter=200)  # max_iter to ensure convergence
+logreg.fit(X, Y) 
+
+# Predict the result for each point in the mesh
+Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()]) 
+Z = Z.reshape(xx.shape) 
+
+# Plotting
+plt.figure(1, figsize=(4, 3)) 
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired) 
+
+# Plot also the training points
+plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=plt.cm.Paired) 
+plt.xlabel("Sepal length") 
+plt.ylabel("Sepal width") 
+plt.title("Logistic Regression on Iris dataset") 
+plt.xlim(xx.min(), xx.max()) 
+plt.ylim(yy.min(), yy.max()) 
+plt.xticks(()) 
+plt.yticks(()) 
+plt.show()
+
+/////////////////////////PRACTICAL 3	//////////////////////
+Aim: Implement Multinomial Logistic Regression (Iris Dataset) 
+
+CODE:
+import numpy as np 
+import pandas as pd 
+from sklearn.linear_model import LogisticRegression 
+from sklearn.model_selection import train_test_split, cross_val_score 
+from sklearn import preprocessing 
+from sklearn.metrics import accuracy_score, confusion_matrix 
+import matplotlib.pyplot as plt 
+import statsmodels.api as sm  # For detailed statistical summary 
+from sklearn import datasets 
+ 
+# Step 2: Load the Iris Dataset 
+iris = datasets.load_iris() 
+X = pd.DataFrame(iris.data, columns=iris.feature_names) 
+y = pd.Series(iris.target, name='species') 
+ 
+# Step 3: Split the Data (80% training, 20% testing) 
+trainX, testX, trainY, testY = train_test_split(X, y, test_size=0.2, random_state=42) 
+ 
+# Step 4: Initialize and Train the Logistic Regression Model 
+log_reg = LogisticRegression(solver='newton-cg', multi_class='multinomial', max_iter=200) 
+log_reg.fit(trainX, trainY) 
+ 
+# Step 5: Make Predictions 
+y_pred = log_reg.predict(testX) 
+ 
+# Step 6: Evaluate the Model 
+print('Accuracy: {:.2f}'.format(accuracy_score(testY, y_pred))) 
+print('Error rate: {:.2f}'.format(1 - accuracy_score(testY, y_pred))) 
+ 
+# Step 7: Cross-Validation Scores 
+clf = LogisticRegression(solver='newton-cg', multi_class='multinomial', max_iter=200) 
+scores = cross_val_score(clf, trainX, trainY, cv=5) 
+print("Cross-Validation Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2)) 
+ 
+# Step 8: Confusion Matrix 
+conf_matrix = confusion_matrix(testY, y_pred) 
+print("\nConfusion Matrix:\n", conf_matrix) 
+ 
+# Visualize the Confusion Matrix 
+plt.matshow(conf_matrix, cmap=plt.cm.gray) 
+plt.title('Confusion Matrix') 
+plt.colorbar() 
+plt.ylabel('True Label') 
+plt.xlabel('Predicted Label') 
+plt.show() 
+ 
+# Step 9: Predicted Class Probabilities 
+probability = log_reg.predict_proba(testX) 
+print("\nPredicted Probabilities:\n", probability) 
+ 
+# Convert to DataFrame for Better Visualization 
+df = pd.DataFrame(probability, columns=log_reg.classes_) 
+ 
+# Step 10: Verify Probabilities Sum to 1 
+df['sum'] = df.sum(axis=1) 
+ 
+# Step 11: Add Predicted and Actual Classes 
+df['predicted_class'] = y_pred 
+df['actual_class'] = testY.reset_index(drop=True) 
+ 
+# Step 12: Check if Predictions are Correct 
+df['correct_prediction?'] = df['predicted_class'] == df['actual_class'] 
+ 
+# Step 13: Manually Calculate Accuracy 
+true_predictions = df['correct_prediction?'].sum() 
+total = df.shape[0] 
+print('Manual Calculated Accuracy is: {:.2f}%'.format((true_predictions / total) * 100))
+# Step 14: Inspect Misclassified Instances 
+wrong_pred = df[df["correct_prediction?"] == False] 
+print("\nMisclassified Predictions:\n", wrong_pred) 
+ 
+# Step 15: Multinomial Logit Model with Statsmodels 
+# Add constant term for intercept 
+X_sm = sm.add_constant(X) 
+mnlogit_mod = sm.MNLogit(y, X_sm) 
+mnlogit_fit = mnlogit_mod.fit(maxiter=100) 
+print(mnlogit_fit.summary())
+
+/////////////////////////PRACTICAL 4//////////////////////
+Aim: Implement SVM classifier (Iris Dataset) 
+CODE:
+# Step 1: Import necessary libraries 
+import numpy as np 
+import matplotlib.pyplot as plt 
+from sklearn import svm, datasets 
+ 
+# Step 2: Define helper function to create a mesh grid for plotting 
+def make_meshgrid(x, y, h=0.02): 
+    """ 
+    Create a mesh of points to plot in the decision boundary 
+     
+    Parameters: 
+    - x: Data to base x-axis meshgrid on 
+    - y: Data to base y-axis meshgrid on 
+    - h: Step size for meshgrid, optional (default: 0.02) 
+     
+    Returns: 
+    - xx, yy: ndarray of grid points 
+    """ 
+    x_min, x_max = x.min() - 1, x.max() + 1 
+    y_min, y_max = y.min() - 1, y.max() + 1 
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), 
+                         np.arange(y_min, y_max, h)) 
+    return xx, yy 
+
+# Step 3: Define helper function to plot decision boundaries 
+def plot_contours(ax, clf, xx, yy, **params): 
+    """ 
+    Plot the decision boundaries for a classifier. 
+    Parameters: 
+    - ax: Matplotlib axes object 
+    - clf: A classifier (SVM in this case) 
+    - xx: Meshgrid ndarray for x-axis 
+    - yy: Meshgrid ndarray for y-axis 
+    - params: Optional parameters for contourf 
+    """ 
+    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()]) 
+    Z = Z.reshape(xx.shape) 
+    out = ax.contourf(xx, yy, Z, **params) 
+    return out 
+
+# Step 4: Load the Iris dataset 
+iris = datasets.load_iris() 
+X = iris.data[:, :2]   # Take only the first two features for easy visualization 
+y = iris.target        # Target labels (0, 1, 2 for the three classes) 
+ 
+# Step 5: Define SVM models with different kernels 
+C = 1.0  # SVM regularization parameter 
+models = ( 
+    svm.SVC(kernel="linear", C=C), 
+    svm.LinearSVC(C=C, max_iter=10000), 
+    svm.SVC(kernel="rbf", gamma=0.7, C=C), 
+    svm.SVC(kernel="poly", degree=3, gamma="auto", C=C) 
+) 
+ 
+# Step 6: Train each model on the data 
+models = [clf.fit(X, y) for clf in models] 
+ 
+# Step 7: Titles for the subplots 
+titles = ( 
+    "SVC with linear kernel", 
+    "LinearSVC (linear kernel)", 
+    "SVC with RBF kernel", 
+    "SVC with polynomial (degree 3) kernel" 
+) 
+ 
+# Step 8: Plot the decision boundaries for each model 
+fig, sub = plt.subplots(2, 2, figsize=(10, 8)) 
+plt.subplots_adjust(wspace=0.4, hspace=0.4)
+
+# Create the mesh grid for plotting 
+X0, X1 = X[:, 0], X[:, 1] 
+xx, yy = make_meshgrid(X0, X1) 
+ 
+# Step 9: Loop through each model and plot 
+for clf, title, ax in zip(models, titles, sub.flatten()): 
+    plot_contours(ax, clf, xx, yy, cmap=plt.cm.coolwarm, alpha=0.8) 
+    # Plot the data points 
+    ax.scatter(X0, X1, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors="k") 
+    ax.set_xlim(xx.min(), xx.max()) 
+    ax.set_ylim(yy.min(), yy.max()) 
+    ax.set_xlabel("Sepal length") 
+    ax.set_ylabel("Sepal width") 
+    ax.set_xticks(()) 
+    ax.set_yticks(()) 
+    ax.set_title(title) 
+ 
+# Step 10: Display the final plots 
+plt.show()
+
+////////////////Practical 5///////////
+Practical No. 5 
+ 
+Aim: Train and fine-tune a Decision Tree for the Moons Dataset 
+
+CODE:
+# Import necessary libraries 
+import numpy as np 
+import matplotlib.pyplot as plt 
+from sklearn.datasets import make_moons 
+from sklearn.model_selection import train_test_split, GridSearchCV 
+from sklearn.tree import DecisionTreeClassifier 
+from sklearn.metrics import ( 
+    confusion_matrix, 
+    precision_score, 
+    recall_score, 
+    f1_score, 
+) 
+ 
+# Function to plot dataset 
+def plot_dataset(X, y, axes): 
+    plt.figure(figsize=(10, 6)) 
+    plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs", alpha=0.5)
+    plt.plot(X[:, 0][y == 1], X[:, 1][y == 1], "g^", alpha=0.2) 
+    plt.axis(axes) 
+    plt.grid(True) 
+    plt.xlabel(r"$x_1$", fontsize=20) 
+    plt.ylabel(r"$x_2$", fontsize=20) 
+    plt.show() 
+ 
+# Generate toy dataset 
+X, y = make_moons(n_samples=10000, noise=0.4, random_state=21) 
+plot_dataset(X, y, [-3, 5, -3, 3]) 
+ 
+# Split the dataset 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2) 
+ 
+# Define Decision Tree and parameter grid 
+tree_clf = DecisionTreeClassifier() 
+parameter = { 
+    'criterion': ['gini', 'entropy'], 
+    'max_leaf_nodes': list(range(2, 50)), 
+    'min_samples_split': [2, 3, 4], 
+} 
+ 
+# Apply Grid Search with cross-validation 
+clf = GridSearchCV(tree_clf, parameter, cv=5, scoring="accuracy", return_train_score=True, n_jobs=
+1) 
+clf.fit(X_train, y_train) 
+ 
+# Output best parameters 
+print("Best Parameters:", clf.best_params_) 
+ 
+# Training scores per parameter combo 
+print("\nTraining Scores and Parameters:") 
+cvres = clf.cv_results_ 
+for mean_score, params in zip(cvres["mean_train_score"], cvres["params"]): 
+    print(f"{mean_score:.4f} => {params}") 
+ 
+# Evaluate training accuracy 
+train_accuracy = clf.score(X_train, y_train) 
+print("\nTraining Accuracy:", train_accuracy) 
+ 
+# Confusion matrix 
+pred = clf.predict(X_train) 
+cm = confusion_matrix(y_train, pred) 
+print("\nConfusion Matrix (Train):") 
+print(cm) 
+ 
+# Precision, recall, F1-score
+
+//////////////////////////PRACTICAL 6 ///////////////////
+Practical No. 6 
+ 
+Aim: Implement Multi-Layer Perceptron for the classification of handwritten digits (MNIST Dataset) 
+
+CODE:
+# Import Important liabrary 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import tensorflow as tf 
+ 
+# Load MNIST dataset 
+mnist = tf.keras.datasets.mnist 
+(x_train, y_train), (x_test, y_test) = mnist.load_data() 
+ 
+# Normalize the data 
+x_train = tf.keras.utils.normalize(x_train, axis=1) 
+x_test  = tf.keras.utils.normalize(x_test,  axis=1) 
+ 
+# Build the model 
+model = tf.keras.models.Sequential([ 
+    tf.keras.layers.Flatten(input_shape=(28, 28)), 
+    tf.keras.layers.Dense(128, activation='relu'),   # 128 neurons 
+    tf.keras.layers.Dense(128, activation='relu'),   # 128 neurons 
+    tf.keras.layers.Dense(10,  activation='softmax') # 10 output classes 
+]) 
+# Compile the model 
+model.compile(
+     optimizer='adam', 
+    loss='sparse_categorical_crossentropy', 
+    metrics=['accuracy'] 
+) 
+ 
+# Model parameters 
+EPOCHS     = 10 
+BATCH_SIZE = 32 
+ 
+# Train the model 
+history = model.fit( 
+    x_train, y_train, 
+    epochs=EPOCHS, 
+    batch_size=BATCH_SIZE, 
+    validation_data=(x_test, y_test) 
+) 
+ 
+# Evaluate the model 
+val_loss, val_acc = model.evaluate(x_test, y_test) 
+print(f"\nTest Loss: {val_loss:.4f}    Test Accuracy: {val_acc:.4f}") 
+ 
+# Save and reload the model 
+model.save('mnist.keras') 
+new_model = tf.keras.models.load_model('mnist.keras') 
+ 
+ 
+# Make and display predictions on the first 10 test samples 
+predictions = new_model.predict(x_test) 
+for i in range(10): 
+    pred_label = np.argmax(predictions[i]) 
+    print(f"Sample {i} — Predicted: {pred_label}, True: {y_test[i]}") 
+    plt.imshow(x_test[i], cmap=plt.cm.binary) 
+    plt.axis('off') 
+    plt.show() 
+ 
+# Plot training & validation accuracy over epochs 
+plt.plot(history.history['accuracy'],    label='Training Accuracy') 
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy') 
+plt.title('Training vs Validation Accuracy') 
+plt.xlabel('Epoch') 
+plt.ylabel('Accuracy') 
+plt.legend() 
+plt.grid(True) 
+plt.show() 
+
+
+/////////////////PRACTICAL 7 ////////////////
+Practical No. 7 
+ 
+Aim: Classification of images of clothing using Tensorflow (Fashion MNIST dataset). 
+
+CODE: 
+# Import necessary libraries 
+import tensorflow as tf 
+import numpy as np 
+import matplotlib.pyplot as plt 
+ 
+# Load the Fashion MNIST dataset 
+(X_train_full, y_train_full), (X_test, y_test) = tf.keras.datasets.fashion_mnist.load_data() 
+ 
+# Inspect shape and type 
+print("Training set shape:", X_train_full.shape)     # (60000, 28, 28) 
+print("Training set dtype:", X_train_full.dtype)     # uint8 
+ 
+# Class names for the labels 0–9 
+class_names = [ 
+    "T-shirt/top", "Trouser",    "Pullover", "Dress",    "Coat", 
+    "Sandal",      "Shirt",      "Sneaker",  "Bag",      "Ankle boot" 
+] 
+ 
+# Normalize all images to [0,1] 
+X_train_full = X_train_full / 255.0
+X_test        = X_test        / 255.0 
+ 
+# Split off a validation set from the full training data 
+X_valid, X_train = X_train_full[:5000], X_train_full[5000:] 
+y_valid, y_train = y_train_full[:5000], y_train_full[5000:] 
+ 
+# Plot the first 10 images from the training set 
+plt.figure(figsize=(15, 15)) 
+for i in range(10): 
+    plt.subplot(1, 10, i+1) 
+    plt.imshow(X_train[i], cmap="binary") 
+    plt.axis('off') 
+    plt.title(class_names[y_train[i]], fontsize=10) 
+plt.subplots_adjust(wspace=0.3) 
+plt.show() 
+ 
+# Build the Sequential MLP model 
+model = tf.keras.models.Sequential([ 
+    tf.keras.layers.Flatten(input_shape=(28, 28)),      # 784 input features 
+    tf.keras.layers.Dense(300, activation="relu"),      # hidden layer 
+    tf.keras.layers.Dense(10)                           # output logits (10 classes) 
+]) 
+ 
+# Compile with Adam optimizer & sparse categorical crossentropy 
+model.compile( 
+    optimizer='adam', 
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
+    metrics=['accuracy'] 
+) 
+ 
+# Train for 10 epochs, validating on the hold-out set 
+history = model.fit( 
+    X_train, y_train, 
+    epochs=10, 
+    validation_data=(X_valid, y_valid) 
+) 
+ 
+# Plot training & validation accuracy 
+epochs = range(1, len(history.history['accuracy']) + 1) 
+plt.plot(epochs, history.history['accuracy'],    'b-', label='Training Accuracy') 
+plt.plot(epochs, history.history['val_accuracy'], 'r-', label='Validation Accuracy') 
+plt.title('Training vs Validation Accuracy') 
+plt.xlabel('Epochs') 
+plt.ylabel('Accuracy') 
+plt.legend() 
+plt.grid(True) 
+plt.show() 
+
+# Final evaluation on train & validation sets 
+train_loss, train_acc = model.evaluate(X_train, y_train, verbose=0) 
+valid_loss, valid_acc = model.evaluate(X_valid, y_valid, verbose=0) 
+print(f"Final Training  Accuracy: {train_acc:.4f}") 
+print(f"Final Validation Accuracy: {valid_acc:.4f}") 
+ 
+# Create a probability model by appending a Softmax layer 
+prob_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()]) 
+ 
+# Generate predictions on the test set 
+predictions = prob_model.predict(X_test) 
+ 
+# Plot the first 10 test images with their predicted labels 
+plt.figure(figsize=(15, 15)) 
+for i in range(10): 
+    plt.subplot(1, 10, i+1) 
+    plt.imshow(X_test[i], cmap="binary") 
+    plt.axis('off') 
+    plt.title(class_names[np.argmax(predictions[i])], fontsize=10) 
+plt.subplots_adjust(wspace=0.3) 
+plt.show()
+
+////////////////PRACTICAL 8 ///////////////////
+
