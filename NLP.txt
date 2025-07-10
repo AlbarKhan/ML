@@ -214,3 +214,64 @@ doc = nlp(text)
 print("Named Entities, their labels, and explanations:\n") 
 for ent in doc.ents: 
   print(f"{ent.text:<30} {ent.label_:10} ({spacy.explain(ent.label_)})") 
+
+
+
+/////////////////PRACTICAL 7 ///////////////
+Practical No. – 8 
+Aim: Write a program to Implement Text Summarization for the given sample text. 
+
+code:
+# Import necessary libraries 
+import nltk 
+import re 
+import heapq 
+# Download required nltk data 
+nltk.download('punkt') 
+nltk.download('stopwords') 
+from nltk.corpus import stopwords 
+from nltk.tokenize import sent_tokenize, word_tokenize 
+# 1. Sample text 
+text = """ 
+Artificial Intelligence (AI) is a branch of computer science that aims to create machines 
+that can perform tasks that would typically require human intelligence. These tasks include 
+speech recognition, decision-making, visual perception, and language translation. AI has a 
+wide range of applications, from self-driving cars to virtual assistants like Siri and Alexa. 
+The growth of AI has sparked debates on ethics and job displacement. Despite challenges, AI 
+continues to be a transformative force in the tech industry. 
+""" 
+# 2. Text cleaning 
+clean_text = re.sub(r'\s+', ' ', text) 
+clean_text = re.sub(r'[^a-zA-Z]', ' ', clean_text) 
+clean_text = re.sub(r'\s+', ' ', clean_text) 
+# 3. Sentence tokenization
+sentences = sent_tokenize(text) 
+# 4. Word frequency table (excluding stopwords) 
+stop_words = set(stopwords.words('english')) 
+word_frequencies = {} 
+for word in word_tokenize(clean_text.lower()): 
+    if word not in stop_words: 
+        if word not in word_frequencies: 
+            word_frequencies[word] = 1 
+        else: 
+            word_frequencies[word] += 1 
+# 5. Normalize word frequencies 
+max_freq = max(word_frequencies.values()) 
+for word in word_frequencies: 
+    word_frequencies[word] = word_frequencies[word] / max_freq 
+# 6. Sentence scoring 
+sentence_scores = {} 
+for sent in sentences: 
+    for word in word_tokenize(sent.lower()): 
+        if word in word_frequencies: 
+            if len(sent.split(' ')) < 30:  # avoid too long sentences 
+                if sent not in sentence_scores: 
+                    sentence_scores[sent] = word_frequencies[word] 
+                else: 
+                    sentence_scores[sent] += word_frequencies[word] 
+# 7. Get top N sentences (summary) 
+summary_sentences = heapq.nlargest(2, sentence_scores, key=sentence_scores.get) 
+summary = ' '.join(summary_sentences) 
+# 8. Print the summary 
+print("===== Summary =====") 
+print(summary) 
