@@ -1,0 +1,216 @@
+/////////////////////PRACTICAL 1 ////////////////
+Practical No. - 1 
+Aim: Write a program to implement sentence segmentation and word tokenization. 
+
+CODE:
+# 1. Remove all existing NLTK data to avoid corrupted files
+!rm -rf /root/nltk_data /usr/local/nltk_data
+
+# 2. Download 'punkt' again to a clean directory
+import nltk
+nltk.download('punkt', download_dir='/usr/local/nltk_data')
+
+# 3. Explicitly tell NLTK where to find the data
+nltk.data.path.append('/usr/local/nltk_data')
+
+# 4. Now import tokenizers
+from nltk.tokenize import word_tokenize, sent_tokenize
+
+# 5. Sample text
+text = "Natural Language Processing is fun. NLP helps computers understand text."
+
+# 6. Tokenization
+word_tokens = word_tokenize(text)
+print("Word Tokens:", word_tokens)
+
+sentence_tokens = sent_tokenize(text)
+print("Sentence Tokens:", sentence_tokens)
+
+
+
+/////////////////////PRACTICAL 2 ////////////////
+Practical No. - 2 
+Aim: Write a program to Implement stemming and lemmatization.
+
+CODE:
+
+import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet
+
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
+# Initialize the lemmatizer
+lemmatizer = WordNetLemmatizer()
+
+# Function to map POS tag to WordNet POS format
+def get_wordnet_pos(tag):
+    if tag.startswith('J'):
+        return wordnet.ADJ
+    elif tag.startswith('V'):
+        return wordnet.VERB
+    elif tag.startswith('N'):
+        return wordnet.NOUN
+    elif tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return wordnet.NOUN
+
+# Example text to lemmatize
+text = input("Enter words for lemmatizing: ")
+
+# Tokenize and POS tagging
+tokens = nltk.word_tokenize(text)
+pos_tags = nltk.pos_tag(tokens)
+
+# Lemmatize based on POS
+lemmatized_words = []
+for word, tag in pos_tags:
+    wordnet_pos = get_wordnet_pos(tag)
+    lemmatized_word = lemmatizer.lemmatize(word, wordnet_pos)
+    lemmatized_words.append((word, lemmatized_word))
+
+# Print the results
+for original, lemmatized in lemmatized_words:
+    print(f"Original: {original} -> Lemmatized: {lemmatized}")
+
+
+Practical No. - 4A 
+Aim: Write a program to Implement PoS tagging using HMM.import nltk 
+from nltk.tag import hmm 
+from nltk.corpus import treebank 
+# Download necessary NLTK data 
+nltk.download('treebank') 
+nltk.download('punkt') 
+# Load the Treebank corpus for training and testing 
+train_data = treebank.tagged_sents()[:3000] 
+test_data = treebank.tagged_sents()[3000:] 
+# Train the HMM POS tagger 
+tagger = hmm.HiddenMarkovModelTrainer().train(train_data) 
+# Evaluate the tagger on the test data 
+print(f"Accuracy: {tagger.evaluate(test_data) * 100:.2f}%") 
+# Example sentence for POS tagging 
+sentence = "The quick brown fox jumped over the lazy dog." 
+# Tokenize and POS tag the sentence 
+tokens = nltk.word_tokenize(sentence)
+tags = tagger.tag(tokens) 
+# Print the tagged words 
+print("\nPOS Tags:") 
+for word, tag in tags: 
+  print(f"{word}: {tag}") 
+
+
+/////////////////PRACTICAL 3 ////////////////
+Practical No. - 3 
+Aim: Write a program to Implement a tri-gram model. 
+CODE:
+
+from nltk.util import ngrams 
+sentence = '''Natural language processing is a field of study focused on the interactions between 
+human language and computers.''' 
+# Tokenize the sentence into words 
+words = sentence.split() 
+# Create bigrams from the list of words 
+bigrams = ngrams(words, 2) 
+trigrams=ngrams(words, 3) 
+# Print the bigrams 
+for b in bigrams: 
+  print(b) 
+# Print the trigrams 
+for t  in trigrams  : 
+  print(t)
+
+
+
+/////////////////////PRACTICAL 4B /////////////////
+Practical No. - 4B 
+Aim: Write a program to Implement PoS tagging using Neural Model.
+
+CODE:
+
+import spacy 
+# Load the pre-trained spaCy model for English 
+nlp = spacy.load("en_core_web_sm") 
+# Example sentence 
+sentence = "The quick brown fox jumped over the lazy dog." 
+# Process the sentence with spaCy 
+doc = nlp(sentence) 
+# Print the POS tags for each token (word) 
+print("\nPOS Tags:") 
+for token in doc: 
+  print(f"{token.text}: {token.pos_}") 
+
+
+/////////////////PRACTICAL 5 ///////////////
+Practical No. – 5 
+Aim: Write a program to Implement syntactic parsing of a given text. 
+
+CODE:
+import nltk 
+from nltk import CFG 
+nltk.download('punkt') 
+# Define a new context-free grammar 
+grammar = CFG.fromstring(""" 
+S -> NP VP 
+NP -> Det Adj N | Det N 
+VP -> V NP 
+Det -> 'a' | 'the' 
+Adj -> 'big' | 'small' | 'furry' 
+N -> 'cat' | 'mouse' | 'dog' 
+V -> 'chased' | 'saw' | 'liked' 
+""") 
+# Create a parser 
+parser = nltk.ChartParser(grammar) 
+# Sentence to parse 
+sentence = "the big cat chased a small mouse".split() 
+# Parse the sentence 
+print("Parsing Tree(s):\n") 
+for tree in parser.parse(sentence): 
+  print(tree)
+tree.pretty_print() 
+
+
+/////////////////PRACTICAL 6 ///////////////
+
+Practical No. – 6 
+Aim: Write a program to Implement dependency parsing of a given text. 
+
+code:
+import spacy 
+from spacy import displacy  # <-- This line is crucial 
+nlp = spacy.load('en_core_web_sm') 
+def dependency_parsing(text): 
+  doc = nlp(text) 
+  print(f"{'Word':<15} {'POS':<10} {'Dependency Relation'}") 
+  print("="*40) 
+  for token in doc: 
+    print(f"{token.text:<15} {token.pos_:<10} {token.dep_:<20}")    
+# This will work in a Jupyter Notebook environment 
+  displacy.render(doc, style="dep", jupyter=True) 
+text = "The quick brown fox jumps over the lazy dog." 
+dependency_parsing(text)
+
+
+
+/////////////////PRACTICAL 7 ///////////////
+
+Practical No. – 7 
+Aim: Write a program to Implement Named Entity Recognition (NER). 
+
+code:
+import spacy 
+nlp = spacy.load("en_core_web_sm") 
+text =""" 
+Apple Inc. was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in April 1976. 
+Its headquarters are located in Cupertino, California. The company launched the iPhone in 
+2007. 
+""" 
+# Process the text 
+doc = nlp(text) 
+# Print named entities 
+print("Named Entities, their labels, and explanations:\n") 
+for ent in doc.ents: 
+  print(f"{ent.text:<30} {ent.label_:10} ({spacy.explain(ent.label_)})") 
