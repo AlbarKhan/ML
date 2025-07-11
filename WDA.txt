@@ -405,3 +405,82 @@ def focused_crawler(seed_urls, keywords, max_pages=20):
  
 # Start crawling 
 focused_crawler(seed_urls, keywords) 
+
+/////////////////////PRACTICAL 8 ///////////////////
+ 
+Practical No. 8 
+ 
+Aim: Develop a program for deep search implementation to detect plagiarism in documents online. 
+CODE:
+import requests
+from bs4 import BeautifulSoup
+
+# Replace 'YOUR_BING_API_KEY' with your actual Bing Search API key
+API_KEY = 'YOUR_BING_API_KEY'  # ⚠️ Replace this with your actual API key
+SEARCH_URL = 'https://api.bing.microsoft.com/v7.0/search'
+
+# Input the document to check for plagiarism
+document = """
+Python is an interpreted high-level general-purpose programming language. Python's design 
+philosophy emphasizes code readability with its notable use of significant indentation. 
+Its language constructs and object-oriented approach aim to help programmers write clear, logical 
+code for small and large-scale projects.
+"""
+
+# Split the document into sentences for searching
+chunks = document.split('. ')
+
+# Function to search each chunk online using Bing Search API
+def search_online(query):
+    headers = {"Ocp-Apim-Subscription-Key": API_KEY}
+    params = {"q": query, "textDecorations": True, "textFormat": "HTML"}
+    try:
+        response = requests.get(SEARCH_URL, headers=headers, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"Error during request: {e}")
+        return None
+
+# Function to extract plain text from HTML content (optional usage)
+def extract_text_from_html(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup.get_text()
+
+# Function to check each chunk for plagiarism
+def check_plagiarism(chunks):
+    results = {}
+    for chunk in chunks:
+        query = f'"{chunk.strip()}"'  # Use exact match search and strip extra spaces
+        search_results = search_online(query)
+        if search_results:
+            for result in search_results.get('webPages', {}).get('value', []):
+                snippet = result.get('snippet')
+                url = result.get('url')
+                if snippet and url:
+                    results[chunk] = (url, snippet)
+                    break  # Only consider the first valid result
+        else:
+            results[chunk] = ("No results", "No snippet found")
+    return results
+
+# Run plagiarism check
+plagiarism_results = check_plagiarism(chunks)
+
+# Display the results
+for chunk, result in plagiarism_results.items():
+    url, snippet = result
+    print(f"Chunk: {chunk}\nURL: {url}\nSnippet: {snippet}\n")
+
+# Optional Debugging: Test if API key and endpoint are working
+try:
+    response = requests.get(
+        SEARCH_URL,
+        headers={"Ocp-Apim-Subscription-Key": API_KEY},
+        params={"q": "test"}
+    )
+    print(f"Debugging: {response.status_code} - {response.text}")
+except requests.RequestException as e:
+    print(f"Debugging error: {e}")
+
+
